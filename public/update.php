@@ -3,55 +3,59 @@
 require_once "config.php";
  
 // Define variables and initialize with empty values
-$name = $address = $salary = "";
-$name_err = $address_err = $salary_err = "";
+$name = $age = $cgpa = "";
+$name_err = $age_err = $cgpa_err = "";
  
 // Processing form data when form is submitted
-if(isset($_POST["id"]) && !empty($_POST["id"])){
-    // Get hidden input value
+if($_SERVER["REQUEST_METHOD"] == "POST"){
+    // Validate hidden input value
     $id = $_POST["id"];
-    
+
     // Validate name
     $input_name = trim($_POST["name"]);
     if(empty($input_name)){
         $name_err = "Please enter a name.";
-    } elseif(!filter_var($input_name, FILTER_VALIDATE_REGEXP, array("options"=>array("regexp"=>"/^[a-zA-Z\s]+$/")))){
+    } elseif(!preg_match("/^[a-zA-Z\s]+$/", $input_name)){
         $name_err = "Please enter a valid name.";
     } else{
         $name = $input_name;
     }
-    
-    // Validate address address
-    $input_address = trim($_POST["address"]);
-    if(empty($input_address)){
-        $address_err = "Please enter an address.";     
+
+    // Validate age
+    $input_age = trim($_POST["age"]);
+    if(empty($input_age)){
+        $age_err = "Please enter the age.";
+    } elseif(!ctype_digit($input_age)){
+        $age_err = "Please enter a positive integer value for age.";
     } else{
-        $address = $input_address;
+        $age = $input_age;
     }
-    
-    // Validate salary
-    $input_salary = trim($_POST["salary"]);
-    if(empty($input_salary)){
-        $salary_err = "Please enter the salary amount.";     
-    } elseif(!ctype_digit($input_salary)){
-        $salary_err = "Please enter a positive integer value.";
+
+
+        // Validate cgpa
+    $input_cgpa = trim($_POST["cgpa"]);
+    if(empty($input_cgpa)){
+        $cgpa_err = "Please enter the cgpa.";     
+    } elseif(!preg_match("/^\d+(\.\d+)?$/", $input_cgpa)){
+        $cgpa_err = "Please enter a valid cgpa.";
     } else{
-        $salary = $input_salary;
+        $cgpa = $input_cgpa;
     }
-    
-    // Check input errors before inserting in database
-    if(empty($name_err) && empty($address_err) && empty($salary_err)){
+
+
+    // Check input errors before updating in database
+    if(empty($name_err) && empty($age_err) && empty($cgpa_err)){
         // Prepare an update statement
-        $sql = "UPDATE employees SET name=?, address=?, salary=? WHERE id=?";
+        $sql = "UPDATE students SET name=?, age=?, cgpa=? WHERE id=?";
          
         if($stmt = mysqli_prepare($link, $sql)){
             // Bind variables to the prepared statement as parameters
-            mysqli_stmt_bind_param($stmt, "sssi", $param_name, $param_address, $param_salary, $param_id);
+            mysqli_stmt_bind_param($stmt, "sssi", $param_name, $param_age, $param_cgpa, $param_id);
             
             // Set parameters
             $param_name = $name;
-            $param_address = $address;
-            $param_salary = $salary;
+            $param_age = $age;
+            $param_cgpa = $cgpa;
             $param_id = $id;
             
             // Attempt to execute the prepared statement
@@ -62,6 +66,8 @@ if(isset($_POST["id"]) && !empty($_POST["id"])){
             } else{
                 echo "Something went wrong. Please try again later.";
             }
+        } else{
+            echo "Error: " . mysqli_error($link);
         }
          
         // Close statement
@@ -77,7 +83,7 @@ if(isset($_POST["id"]) && !empty($_POST["id"])){
         $id =  trim($_GET["id"]);
         
         // Prepare a select statement
-        $sql = "SELECT * FROM employees WHERE id = ?";
+        $sql = "SELECT * FROM students WHERE id = ?";
         if($stmt = mysqli_prepare($link, $sql)){
             // Bind variables to the prepared statement as parameters
             mysqli_stmt_bind_param($stmt, "i", $param_id);
@@ -95,8 +101,8 @@ if(isset($_POST["id"]) && !empty($_POST["id"])){
                     
                     // Retrieve individual field value
                     $name = $row["name"];
-                    $address = $row["address"];
-                    $salary = $row["salary"];
+                    $age = $row["age"];
+                    $cgpa = $row["cgpa"];
                 } else{
                     // URL doesn't contain valid id. Redirect to error page
                     header("location: error.php");
@@ -149,15 +155,15 @@ if(isset($_POST["id"]) && !empty($_POST["id"])){
                             <input type="text" name="name" class="form-control" value="<?php echo $name; ?>">
                             <span class="help-block"><?php echo $name_err;?></span>
                         </div>
-                        <div class="form-group <?php echo (!empty($address_err)) ? 'has-error' : ''; ?>">
-                            <label>Address</label>
-                            <textarea name="address" class="form-control"><?php echo $address; ?></textarea>
-                            <span class="help-block"><?php echo $address_err;?></span>
+                        <div class="form-group <?php echo (!empty($age_err)) ? 'has-error' : ''; ?>">
+                            <label>Age</label>
+                            <input type="text" name="age" class="form-control" value="<?php echo $age; ?>">
+                            <span class="help-block"><?php echo $age_err;?></span>
                         </div>
-                        <div class="form-group <?php echo (!empty($salary_err)) ? 'has-error' : ''; ?>">
-                            <label>Salary</label>
-                            <input type="text" name="salary" class="form-control" value="<?php echo $salary; ?>">
-                            <span class="help-block"><?php echo $salary_err;?></span>
+                        <div class="form-group <?php echo (!empty($cgpa_err)) ? 'has-error' : ''; ?>">
+                            <label>CGPA</label>
+                            <input type="text" name="cgpa" class="form-control" value="<?php echo $cgpa; ?>">
+                            <span class="help-block"><?php echo $cgpa_err;?></span>
                         </div>
                         <input type="hidden" name="id" value="<?php echo $id; ?>"/>
                         <input type="submit" class="btn btn-primary" value="Submit">
